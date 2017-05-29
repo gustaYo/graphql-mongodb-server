@@ -4,7 +4,9 @@ import {makeExecutableSchema, addMockFunctionsToSchema} from 'graphql-tools';
 import {resolvers,typeDefs} from './modules';
 
 const Schema: GraphQLSchema = makeExecutableSchema({
-  logger: console,
+  logger: {
+    log (e) { console.log('[GraphQL Log]:', e) }
+  },
   resolverValidationOptions: {
     requireResolversForNonScalar: false,
   },

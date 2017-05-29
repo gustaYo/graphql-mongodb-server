@@ -1,6 +1,7 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import { graphqlExpress, graphiqlExpress } from 'graphql-server-express';
+import OpticsAgent from 'optics-agent';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
 import * as morgan from 'morgan';
@@ -17,7 +18,9 @@ import { Schema } from './schema';
 import RestController = require("./controllers");
 import { SubscriptionServer } from 'subscriptions-transport-ws';
 import { SubscriptionManager } from "graphql-subscriptions";
-import {pubsub} from  './subscriptions'
+import {pubsub} from  './subscriptions';
+
+import subscriptionServer from './subcriptionsServer';
 
 // Default port or given one.
 export const GRAPHQL_ROUTE = "/graphql";
@@ -56,7 +59,7 @@ export function main(options: IMainOptions) {
   app.set('view engine', 'html')
   const oneYear = 365 * 86400000;
   app.use(express.static(appRootDir.get() + "/public", { maxAge: oneYear }))
-
+  app.use(OpticsAgent.middleware())
 
   if(config.debug){
     var logDirectory = path.join(appRootDir.get()+'/', 'log')
@@ -73,12 +76,21 @@ export function main(options: IMainOptions) {
     app.use(GRAPHQL_ROUTE, cors());
   }
 
-  app.use(GRAPHQL_ROUTE, bodyParser.json(), graphqlExpress({
-    context: {
-      some: 'some'
-    },
+  const graphqlExpressResponse = graphqlExpress(request => ({
     schema: Schema,
-  }));
+    formatError: error => ({
+      message: error.message,
+      locations: error.locations,
+      stack: error.stack,
+      path: error.path
+    }),
+    context: {
+      request,
+      opticsContext: OpticsAgent.context(request)
+    }
+  }))
+
+  app.use('/graphql', bodyParser.json(), graphqlExpressResponse)
 
   if (true === options.enableGraphiql) {
     app.use(GRAPHIQL_ROUTE, graphiqlExpress({ endpointURL: GRAPHQL_ROUTE }));
@@ -88,7 +100,7 @@ export function main(options: IMainOptions) {
     const ssl_options = {
       key: fs.readFileSync(appRootDir.get()+'/ssl/private.key'),
       cert: fs.readFileSync(appRootDir.get()+'/ssl/certificate.pem')
-    }   
+    }
     webServer = https.createServer(ssl_options, app)
   }
   else{
@@ -126,46 +138,6 @@ if (require.main === module) {
     useHttps: config.useHttps
   })
       .then((server) => {
-        let port = 3320
-        console.log('server inittt')
-     /*   const httpServer = http.createServer((request, response) => {
-          response.writeHead(404);
-          response.end();
-        });
-
-        httpServer.listen(port, () => console.log( // eslint-disable-line no-console
-            `Websocket Server is now running on http://localhost:${port}`
-        ));*/
-
-        const subscriptionManager = new SubscriptionManager({
-          schema: Schema,
-          pubsub,
-          setupFunctions: {
-            clock: (options, args) => ({
-              clock: (clock: Date) => {
-                const onlyMinutesArg = "onlyMinutesChange";
-                if ( args[onlyMinutesArg] ) {
-                  return clock.getTime() % 60 === 0;
-                }
-                return true;
-              },
-            }),
-          },
-        });
-
-        return [new SubscriptionServer({
-              subscriptionManager,
-              onConnect: async (connectionParams) => {
-                console.log('user connect')
-              },
-              onOperation: (msg, params) => {
-                return Object.assign({}, params, {
-                  context: {},
-                });
-              },
-            },
-            server
-        )];
-
+        subscriptionServer({ schema: Schema, pubsub, server })
   });
 }
