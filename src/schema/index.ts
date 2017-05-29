@@ -1,4 +1,4 @@
-import {GraphQLSchema} from 'graphql';
+import {GraphQLSchema,GraphQLObjectType} from 'graphql';
 import {makeExecutableSchema, addMockFunctionsToSchema} from 'graphql-tools';
 
 import {resolvers,typeDefs} from './modules';

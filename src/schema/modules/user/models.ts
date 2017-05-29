@@ -1,4 +1,4 @@
-import {Document, Schema, Model, model} from "mongoose";
+import {Document, Schema} from "mongoose";
 import DataAccess = require("../../../repository/db");
 var mongoose = DataAccess.mongooseInstance;
 var mongooseConnection = DataAccess.mongooseConnection;

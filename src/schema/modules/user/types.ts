@@ -24,4 +24,10 @@ export default `
         getPerson(id: ID!): UserType
         persons: [UserType]
     }
+    
+    type Subscription {
+      clock(onlyMinutesChange: Boolean): String
+    }
+        
+        
 `;

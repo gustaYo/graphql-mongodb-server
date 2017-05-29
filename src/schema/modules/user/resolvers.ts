@@ -1,6 +1,10 @@
+
+import { Observable } from "rxjs";
+import { pubsub } from "../../../subscriptions";
 import {IUserModel, User} from './models';
 import UserRepository = require("../../../repository/UserRepository");
 const userRepo = new UserRepository();
+
 export default {
     Query: {
         async getPerson(root, args, ctx) {
@@ -25,5 +29,20 @@ export default {
         async matches(root, args, ctx) {
             return await User.find()
         }
-    }
+    },
+
+    Subscription: {
+        clock(root) {
+            return new Date();
+        },
+    },
+
 };
+
+
+Observable.interval(1000)
+    .map(() => new Date())
+    .subscribe((clock: Date) => {
+        console.log("clock")
+        pubsub.publish("clock", clock);
+    });

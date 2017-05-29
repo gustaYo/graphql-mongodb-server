@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": ["es6","es2015.promise"],
+    "lib": ["es6","es2015.promise","dom","esnext.asynciterable"],
     "module": "commonjs",
     "moduleResolution": "node",
     "sourceMap": true,
