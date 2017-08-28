@@ -1,6 +1,6 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
-import { graphqlExpress, graphiqlExpress } from 'graphql-server-express';
+import {graphqlExpress, graphiqlExpress} from 'apollo-server-express';
 import OpticsAgent from 'optics-agent';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
